@@ -735,28 +735,59 @@ export interface CallToolRequest extends Request {
   };
 }
 
-export type AsyncOperationCancelResult = Result;
+export type CancelAsyncToolCallResult = Result;
 
-export interface AsyncOperationCancelRequest extends Request {
-  method: "async-operations/cancel";
+export interface CancelAsyncToolCallRequest extends Request {
+  method: "tools/async/cancel";
   token: AsyncOperationToken;
 }
 
-export interface AsyncOperationDescribeResult extends Result {
-  state: "running" | "successful" | "failed" | "canceled";
+export interface DescribeAsyncToolCallResult extends Result {
+  state: "running" | "successful" | "failed" | "cancelled";
 }
 
-export interface AsyncOperationDescribeRequest extends Request {
-  method: "async-operations/describe";
+export interface DescribeAsyncToolCallRequest extends Request {
+  method: "tools/async/describe";
   token: AsyncOperationToken;
 }
 
 export type GetAsyncToolResultResult = CallToolResult;
 
 export interface GetAsyncToolResultRequest extends Request {
-  method: "tools/get-async-result";
+  method: "tools/async/get-result";
   token: AsyncOperationToken;
   wait?: number;
+}
+
+export interface ResolveAsyncToolCallNotification extends Notification {
+  method: "notifications/tools/async/resolve";
+  token: AsyncOperationToken;
+  state: "successful" | "failed" | "cancelled";
+  /**
+   * A list of content objects that represent the unstructured result of the tool call.
+   */
+  content: (TextContent | ImageContent | AudioContent | EmbeddedResource)[];
+
+  /**
+   * An optional JSON object that represents the structured result of the tool call.
+   */
+  structuredContent?: { [key: string]: unknown };
+
+  /**
+   * Whether the tool call ended in an error.
+   *
+   * If not set, this is assumed to be false (the call was successful).
+   * 
+   * Any errors that originate from the tool SHOULD be reported inside the result
+   * object, with `isError` set to true, _not_ as an MCP protocol-level error
+   * response. Otherwise, the LLM would not be able to see that an error occurred
+   * and self-correct.
+   *
+   * However, any errors in _finding_ the tool, an error indicating that the
+   * server does not support tool calls, or any other exceptional conditions,
+   * should be reported as an MCP error response.
+   */
+  isError?: boolean;
 }
 
 /**
@@ -1275,15 +1306,16 @@ export type ClientRequest =
   | UnsubscribeRequest
   | CallToolRequest
   | ListToolsRequest
-  | AsyncOperationCancelRequest
-  | AsyncOperationDescribeRequest
+  | CancelAsyncToolCallRequest
+  | DescribeAsyncToolCallRequest
   | GetAsyncToolResultRequest;
 
 export type ClientNotification =
   | CancelledNotification
   | ProgressNotification
   | InitializedNotification
-  | RootsListChangedNotification;
+  | RootsListChangedNotification
+  | ResolveAsyncToolCallNotification;
 
 export type ClientResult = EmptyResult | CreateMessageResult | ListRootsResult;
 
@@ -1313,6 +1345,6 @@ export type ServerResult =
   | ReadResourceResult
   | CallToolResult
   | ListToolsResult
-  | AsyncOperationCancelResult
-  | AsyncOperationDescribeResult
+  | CancelAsyncToolCallResult
+  | DescribeAsyncToolCallResult
   | GetAsyncToolResultResult;
