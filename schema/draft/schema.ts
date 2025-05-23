@@ -34,6 +34,8 @@ export type ProgressToken = string | number;
  */
 export type Cursor = string;
 
+export type AsyncToken = string;
+
 export interface Request {
   method: string;
   params?: {
@@ -697,6 +699,10 @@ export interface CallToolResult extends Result {
    */
   structuredContent?: { [key: string]: unknown };
 
+  asyncResult?: {
+    token: AsyncToken;
+  };
+
   /**
    * Whether the tool call ended in an error.
    *
@@ -722,7 +728,35 @@ export interface CallToolRequest extends Request {
   params: {
     name: string;
     arguments?: { [key: string]: unknown };
+    callback: {
+      url: string;
+      headers: { [key: string]: string };
+    };
   };
+}
+
+export type AsyncToolCallCancelResult = Result;
+
+export interface AsyncToolCallCancelRequest extends Request {
+  method: "tools/async/cancel";
+  token: AsyncToken;
+}
+
+export type AsyncToolCallGetResultResult = CallToolResult;
+
+export interface AsyncToolCallGetResultRequest extends Request {
+  method: "tools/async/get-result";
+  token: AsyncToken;
+  wait?: number;
+}
+
+export interface AsyncToolCallGetInfoResult extends Result {
+  state: "running" | "successful" | "failed" | "canceled";
+}
+
+export interface AsyncToolCallGetInfoRequest extends Request {
+  method: "tools/async/get-info";
+  token: AsyncToken;
 }
 
 /**
@@ -1240,7 +1274,10 @@ export type ClientRequest =
   | SubscribeRequest
   | UnsubscribeRequest
   | CallToolRequest
-  | ListToolsRequest;
+  | ListToolsRequest
+  | AsyncToolCallCancelRequest
+  | AsyncToolCallGetResultRequest
+  | AsyncToolCallGetInfoRequest;
 
 export type ClientNotification =
   | CancelledNotification
@@ -1275,4 +1312,7 @@ export type ServerResult =
   | ListResourcesResult
   | ReadResourceResult
   | CallToolResult
-  | ListToolsResult;
+  | ListToolsResult
+  | AsyncToolCallCancelResult
+  | AsyncToolCallGetResultResult
+  | AsyncToolCallGetInfoResult;
