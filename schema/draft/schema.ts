@@ -34,7 +34,7 @@ export type ProgressToken = string | number;
  */
 export type Cursor = string;
 
-export type AsyncToken = string;
+export type AsyncOperationToken = string;
 
 export interface Request {
   method: string;
@@ -699,8 +699,8 @@ export interface CallToolResult extends Result {
    */
   structuredContent?: { [key: string]: unknown };
 
-  asyncResult?: {
-    token: AsyncToken;
+  asyncOperation?: {
+    token: AsyncOperationToken;
   };
 
   /**
@@ -735,28 +735,28 @@ export interface CallToolRequest extends Request {
   };
 }
 
-export type AsyncToolCallCancelResult = Result;
+export type AsyncOperationCancelResult = Result;
 
-export interface AsyncToolCallCancelRequest extends Request {
-  method: "tools/async/cancel";
-  token: AsyncToken;
+export interface AsyncOperationCancelRequest extends Request {
+  method: "async-operations/cancel";
+  token: AsyncOperationToken;
 }
 
-export type AsyncToolCallGetResultResult = CallToolResult;
-
-export interface AsyncToolCallGetResultRequest extends Request {
-  method: "tools/async/get-result";
-  token: AsyncToken;
-  wait?: number;
-}
-
-export interface AsyncToolCallGetInfoResult extends Result {
+export interface AsyncOperationDescribeResult extends Result {
   state: "running" | "successful" | "failed" | "canceled";
 }
 
-export interface AsyncToolCallGetInfoRequest extends Request {
-  method: "tools/async/get-info";
-  token: AsyncToken;
+export interface AsyncOperationDescribeRequest extends Request {
+  method: "async-operations/describe";
+  token: AsyncOperationToken;
+}
+
+export type GetAsyncToolResultResult = CallToolResult;
+
+export interface GetAsyncToolResultRequest extends Request {
+  method: "tools/get-async-result";
+  token: AsyncOperationToken;
+  wait?: number;
 }
 
 /**
@@ -1275,9 +1275,9 @@ export type ClientRequest =
   | UnsubscribeRequest
   | CallToolRequest
   | ListToolsRequest
-  | AsyncToolCallCancelRequest
-  | AsyncToolCallGetResultRequest
-  | AsyncToolCallGetInfoRequest;
+  | AsyncOperationCancelRequest
+  | AsyncOperationDescribeRequest
+  | GetAsyncToolResultRequest;
 
 export type ClientNotification =
   | CancelledNotification
@@ -1313,6 +1313,6 @@ export type ServerResult =
   | ReadResourceResult
   | CallToolResult
   | ListToolsResult
-  | AsyncToolCallCancelResult
-  | AsyncToolCallGetResultResult
-  | AsyncToolCallGetInfoResult;
+  | AsyncOperationCancelResult
+  | AsyncOperationDescribeResult
+  | GetAsyncToolResultResult;
