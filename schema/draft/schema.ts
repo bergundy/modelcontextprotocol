@@ -739,7 +739,13 @@ export type CancelAsyncToolCallResult = Result;
 
 export interface CancelAsyncToolCallRequest extends Request {
   method: "tools/async/cancel";
-  token: AsyncOperationToken;
+  params: {
+    /**
+     * The tool name.
+     */
+    name: string;
+    token: AsyncOperationToken;
+  };
 }
 
 export interface DescribeAsyncToolCallResult extends Result {
@@ -748,15 +754,27 @@ export interface DescribeAsyncToolCallResult extends Result {
 
 export interface DescribeAsyncToolCallRequest extends Request {
   method: "tools/async/describe";
-  token: AsyncOperationToken;
+  params: {
+    /**
+     * The tool name.
+     */
+    name: string;
+    token: AsyncOperationToken;
+  };
 }
 
 export type GetAsyncToolResultResult = CallToolResult;
 
 export interface GetAsyncToolResultRequest extends Request {
   method: "tools/async/get-result";
-  token: AsyncOperationToken;
-  wait?: number;
+  params: {
+    /**
+     * The tool name.
+     */
+    name: string;
+    token: AsyncOperationToken;
+    wait?: number;
+  };
 }
 
 export interface ResolveAsyncToolCallNotification extends Notification {
