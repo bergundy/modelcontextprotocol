@@ -699,6 +699,11 @@ export interface CallToolResult extends Result {
    */
   structuredContent?: { [key: string]: unknown };
 
+  /**
+   * If present, indicates that the tool call will complete asynchronously.
+   *
+   * The token returned can be used to poll on the result or cancel the async operation.
+   */
   asyncOperation?: {
     token: AsyncOperationToken;
   };
@@ -728,15 +733,33 @@ export interface CallToolRequest extends Request {
   params: {
     name: string;
     arguments?: { [key: string]: unknown };
+    /**
+     * Optional request ID for deduplication.
+     */
+    requestId?: string;
+    /**
+     * Optional callback to receive async tool completion notifications.
+     */
     callback: {
       url: string;
-      headers: { [key: string]: string };
+      /**
+       * Metadata to attach to the completion request.
+       *
+       * This metadata can be used by the caller to associate the completion with the requesting agent.
+       */
+      metadata: { [key: string]: string };
     };
   };
 }
 
+/**
+ * The server's response to an async tool cancellation call.
+ */
 export type CancelAsyncToolCallResult = Result;
 
+/**
+ * Use by the client to cancel an async tool invocation.
+ */
 export interface CancelAsyncToolCallRequest extends Request {
   method: "tools/async/cancel";
   params: {
@@ -744,27 +767,21 @@ export interface CancelAsyncToolCallRequest extends Request {
      * The tool name.
      */
     name: string;
-    token: AsyncOperationToken;
-  };
-}
-
-export interface DescribeAsyncToolCallResult extends Result {
-  state: "running" | "successful" | "failed" | "cancelled";
-}
-
-export interface DescribeAsyncToolCallRequest extends Request {
-  method: "tools/async/describe";
-  params: {
     /**
-     * The tool name.
+     * The token returned in the tool invocation result.
      */
-    name: string;
     token: AsyncOperationToken;
   };
 }
 
+/**
+ * The server's response to a request for getting the result of an async tool invocation.
+ */
 export type GetAsyncToolResultResult = CallToolResult;
 
+/**
+ * Use by the client to get the result of an async tool invocation.
+ */
 export interface GetAsyncToolResultRequest extends Request {
   method: "tools/async/get-result";
   params: {
@@ -772,13 +789,34 @@ export interface GetAsyncToolResultRequest extends Request {
      * The tool name.
      */
     name: string;
+    /**
+     * The token returned in the tool invocation result.
+     */
     token: AsyncOperationToken;
+    /**
+     * Optional wait duration in milliseconds.
+     *
+     * If specified and non-zero, turns this request into a long poll.
+     */
     wait?: number;
   };
 }
 
+/**
+ * A client notification to resolve an async tool invocation request.
+ *
+ * In this case the client is the server that recieved the original tool invocation, but not necessarily the same
+ * process. The server is the client that sent the originally invoked the tool.
+ */
 export interface ResolveAsyncToolCallNotification extends Notification {
   method: "notifications/tools/async/resolve";
+  /**
+   * Metadata provided in the original tool invocation request.
+   */
+  metadata: { [key: string]: string };
+  /**
+   * The token returned in the tool invocation result.
+   */
   token: AsyncOperationToken;
   state: "successful" | "failed" | "cancelled";
   /**
@@ -1325,7 +1363,6 @@ export type ClientRequest =
   | CallToolRequest
   | ListToolsRequest
   | CancelAsyncToolCallRequest
-  | DescribeAsyncToolCallRequest
   | GetAsyncToolResultRequest;
 
 export type ClientNotification =
@@ -1364,5 +1401,4 @@ export type ServerResult =
   | CallToolResult
   | ListToolsResult
   | CancelAsyncToolCallResult
-  | DescribeAsyncToolCallResult
   | GetAsyncToolResultResult;
